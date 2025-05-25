@@ -144,13 +144,13 @@ const MenuPage = () => {
 
         const verifyData = await verifyRes.json();
         if (verifyData.success) {
-          placeOrder(); // Only place order after successful payment
+          placeOrder();
         } else {
           toast.error("Payment Verification Failed");
         }
       },
       theme: {
-        color: "#3399cc",
+        color: "#8B5CF6",
       },
     };
 
@@ -174,86 +174,176 @@ const MenuPage = () => {
       return 0;
     });
 
+  const totalAmount = order.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
   return (
-    <div className="p-6">
-      <Toaster />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1F2937',
+            color: '#F9FAFB',
+            borderRadius: '12px',
+          },
+        }}
+      />
+      
       {showScanner && <QRScanner onScan={handleScan} />}
 
-      <nav className="flex justify-between items-center mb-6 p-4 bg-gray-200 rounded">
-        <h1 className="text-2xl font-bold text-gray-800">Table {tableNumber || "Unknown"}</h1>
-        <button onClick={() => setShowScanner(true)} className="bg-blue-500 text-white px-4 py-2 rounded">
-          Scan QR Again
-        </button>
-      </nav>
-
-      {orderStatus && (
-        <div className="p-4 bg-yellow-200 text-gray-800 font-bold rounded mb-4">
-          Order Status: <span className="text-blue-600">{orderStatus}</span>
-        </div>
-      )}
-
-      {order.length > 0 && (
-        <div className="p-4 border rounded mb-4 bg-gray-100">
-          <h2 className="font-bold text-lg mb-2">Your Order</h2>
-          {order.map((item) => (
-            <div key={item.id} className="flex justify-between items-center mb-2">
-              <p>{item.name} (x{item.quantity})</p>
+      {/* Header Navigation */}
+      <nav className="sticky top-0 z-10 backdrop-blur-md bg-white/80 border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <span className="text-white font-bold text-lg">🍽️</span>
+              </div>
               <div>
-                <button className="bg-red-500 text-white px-2 py-1 mr-2" onClick={() => removeFromOrder(item.id)}>
-                  -
-                </button>
-                <button className="bg-green-500 text-white px-2 py-1" onClick={() => addToOrder(item)}>
-                  +
-                </button>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                  QR Restaurant
+                </h1>
+                <p className="text-slate-600 text-sm">
+                  Table {tableNumber || "Unknown"}
+                </p>
               </div>
             </div>
-          ))}
-          <button onClick={handlePayment} className="bg-blue-600 text-white px-4 py-2 rounded mt-2">
-            Pay & Place Order
-          </button>
+            <button 
+              onClick={() => setShowScanner(true)} 
+              className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white px-6 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              📱 Scan QR
+            </button>
+          </div>
         </div>
-      )}
+      </nav>
 
-      {/* Category Filter */}
-      <div className="mb-4">
-        <button
-          id="filter-all"
-          className={`mr-2 px-4 py-2 rounded ${categoryFilter === 'All' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => handleCategoryFilter('All')}
-        >
-          All
-        </button>
-        {[...new Set(menuItems.map((item) => item.category))].map((category) => (
-          <button
-            key={category}
-            id={`filter-${category.toLowerCase().replace(' ', '-')}`}
-            className={`mr-2 px-4 py-2 rounded ${categoryFilter === category ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-            onClick={() => handleCategoryFilter(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Order Status */}
+        {orderStatus && (
+          <div className="mb-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl shadow-sm">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                <span className="text-amber-600 font-bold">📋</span>
+              </div>
+              <div>
+                <p className="text-slate-700 font-medium">Order Status</p>
+                <p className="text-amber-700 font-bold text-lg">{orderStatus}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
-      {/* Sort Options */}
-      <div className="mb-4">
-        <label htmlFor="sort-options" className="mr-2">Sort By:</label>
-        <select
-          id="sort-options"
-          className="border rounded p-2"
-          value={sortOption}
-          onChange={(e) => handleSortOptionChange(e.target.value)}
-        >
-          <option id="sort-default" value="Default">Default</option>
-          <option id="sort-price-low-high" value="Price: Low to High">Price: Low to High</option>
-          <option id="sort-price-high-low" value="Price: High to Low">Price: High to High</option>
-        </select>
-      </div>
+        {/* Current Order */}
+        {order.length > 0 && (
+          <div className="mb-8 p-6 bg-white rounded-2xl shadow-lg border border-slate-200">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 font-bold">🛒</span>
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">Your Order</h2>
+            </div>
+            
+            <div className="space-y-3 mb-6">
+              {order.map((item) => (
+                <div key={item.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl">
+                  <div className="flex-1">
+                    <p className="font-medium text-slate-800">{item.name}</p>
+                    <p className="text-slate-600 text-sm">₹{item.price} × {item.quantity}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <button 
+                      className="w-8 h-8 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-bold transition-colors duration-200" 
+                      onClick={() => removeFromOrder(item.id)}
+                    >
+                      −
+                    </button>
+                    <span className="w-8 text-center font-medium text-slate-700">{item.quantity}</span>
+                    <button 
+                      className="w-8 h-8 bg-green-100 hover:bg-green-200 text-green-600 rounded-lg font-bold transition-colors duration-200" 
+                      onClick={() => addToOrder(item)}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {filteredMenu.map((item) => (
-          <MenuItem key={item.id} item={item} addToOrder={() => addToOrder(item)} />
-        ))}
+            <div className="border-t border-slate-200 pt-4">
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-lg font-bold text-slate-800">Total</span>
+                <span className="text-2xl font-bold text-violet-600">₹{totalAmount}</span>
+              </div>
+              <button 
+                onClick={handlePayment} 
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                💳 Pay & Place Order
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Filters and Sort */}
+        <div className="mb-8 space-y-4">
+          {/* Category Filter */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h3 className="text-lg font-semibold text-slate-800 mb-4">Categories</h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                id="filter-all"
+                className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                  categoryFilter === 'All' 
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg' 
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+                onClick={() => handleCategoryFilter('All')}
+              >
+                All
+              </button>
+              {[...new Set(menuItems.map((item) => item.category))].map((category) => (
+                <button
+                  key={category}
+                  id={`filter-${category.toLowerCase().replace(' ', '-')}`}
+                  className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
+                    categoryFilter === category 
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg' 
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
+                  onClick={() => handleCategoryFilter(category)}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sort Options */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <label htmlFor="sort-options" className="block text-lg font-semibold text-slate-800 mb-3">
+              Sort By
+            </label>
+            <select
+              id="sort-options"
+              className="w-full md:w-auto px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200"
+              value={sortOption}
+              onChange={(e) => handleSortOptionChange(e.target.value)}
+            >
+              <option id="sort-default" value="Default">Default Order</option>
+              <option id="sort-price-low-high" value="Price: Low to High">Price: Low to High</option>
+              <option id="sort-price-high-low" value="Price: High to Low">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Menu Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredMenu.map((item) => (
+            <MenuItem key={item.id} item={item} addToOrder={() => addToOrder(item)} />
+          ))}
+        </div>
       </div>
     </div>
   );
